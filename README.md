@@ -12,7 +12,7 @@ The git to detectron2 is found [here](https://github.com/facebookresearch/detect
 
 Denspose is found within the Detectron2 repository at Detectron2/projects/Densepose and an installation guide for the package is foun at the bottom of [this page](https://github.com/facebookresearch/detectron2/blob/main/projects/DensePose/doc/GETTING_STARTED.md)
 
-Denspose needs a config file which we have choosen to include locally in this repository, you can change this config file by downloading a new yamlfile from [Densepose/configs](https://github.com/facebookresearch/detectron2/tree/main/projects/DensePose/configs)
+Denspose needs a config file which we have choosen to include locally in this repository, you can find these files at [Densepose/configs](https://github.com/facebookresearch/detectron2/tree/main/projects/DensePose/configs)
 
 
 ### Install commands in short
