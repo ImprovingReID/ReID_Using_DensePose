@@ -12,7 +12,8 @@ import os
 from pathlib import Path
 
 import pickle
-configpath = '/mnt/c/users/bjorn/onedrive/dokument/examensarbete/venv/detectron2/projects/DensePose/configs/densepose_rcnn_R_50_FPN_s1x.yaml'
+
+configpath = 'configs/densepose_rcnn_R_50_FPN_s1x.yaml'
 model = 'https://dl.fbaipublicfiles.com/densepose/densepose_rcnn_R_50_FPN_s1x/165712039/model_final_162be9.pkl'
 
 
@@ -99,5 +100,5 @@ def texture(pkl_file, pkl_dir = None, directory = None, savedir = 'textures/'):
         return outpath
 
 if __name__ == '__main__':
-    infere_images('images')
+    infere_images('../images')
     
