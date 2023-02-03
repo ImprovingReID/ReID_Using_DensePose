@@ -1,1 +1,1 @@
-# ReID_Using_DensePose
+# ReID_Using_DensePoseThis is a master thesis by Anton Fredriksson and Björn Elwin at Axis Communications.We want to improve Re-ID algorithms using Facebook AI's DensePose
