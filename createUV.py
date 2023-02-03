@@ -29,7 +29,7 @@ def infere_images(directory):
         if os.path.isfile(f):
             infere_image(image, directory)
 
-def create_pkl(image , directory = None, savedir = 'pkl_files/'):
+def create_pkl(image , directory = None, savedir = 'data/pkl_files/'):
     filename = image.split('.')[0]
     outpath = savedir + filename+ '.pkl'
     impath = directory + '/' + image
@@ -45,7 +45,7 @@ def create_pkl(image , directory = None, savedir = 'pkl_files/'):
 
     return filename+ '.pkl', savedir
 
-def create_mask(image , directory = None, visualization = 'dp_contour,bbox' , savedir = 'mask/' ): # 'dp_contour,bbox' , 'bbox,dp_segm' 
+def create_mask(image , directory = None, visualization = 'dp_contour,bbox' , savedir = 'data/mask/' ): # 'dp_contour,bbox' , 'bbox,dp_segm' 
     filename = image.split('.')[0]
     outpath = savedir + filename+ '_mask.jpg'
     impath = directory + '/' + image
@@ -69,7 +69,7 @@ def create_mask(image , directory = None, visualization = 'dp_contour,bbox' , sa
 #             except EOFError:
 #                 break
 
-def texture(pkl_file, pkl_dir = None, directory = None, savedir = 'textures/'):
+def texture(pkl_file, pkl_dir = None, directory = None, savedir = 'data/textures/'):
 
     filename = pkl_file.split('.')[0]
     outpath = savedir + filename+ '_texture.jpg'
@@ -100,5 +100,5 @@ def texture(pkl_file, pkl_dir = None, directory = None, savedir = 'textures/'):
         return outpath
 
 if __name__ == '__main__':
-    infere_images('../images')
+    infere_images('data/images')
     

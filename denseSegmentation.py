@@ -75,11 +75,11 @@ def denseSegmentor(dataset_dir,output_dir, crop = False):
 
 
 def market1501():
-    output_dir= 'SegmentedMarket1501'
+    output_dir= 'data/SegmentedMarket1501'
     
     Path(output_dir).mkdir(exist_ok=True, parents=True)
 
-    images_dir = '../Market-1501-v15.09.15/gt_bbox'
+    images_dir = 'data/Market-1501-v15.09.15/gt_bbox'
     for image in os.listdir(images_dir):
         f = os.path.join(images_dir, image)
         if os.path.isfile(f):

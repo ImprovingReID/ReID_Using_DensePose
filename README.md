@@ -14,15 +14,11 @@ Denspose is found within the Detectron2 repository at Detectron2/projects/Densep
 
 Denspose needs a config file which we have choosen to include locally in this repository, you can find these files at [Densepose/configs](https://github.com/facebookresearch/detectron2/tree/main/projects/DensePose/configs)
 
-
 ### Install commands in short
 ```console
 foo@bar:~$ python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 foo@bar:~$ python3 -m pip install git+https://github.com/facebookresearch/detectron2@main#subdirectory=projects/DensePose
 ```
-
-### Config files
-Config 
 
 ## How to use the functions
 
