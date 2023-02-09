@@ -23,8 +23,6 @@ Denspose needs a config file which we have choosen to include locally in this re
 * OpenCV is optional but needed by demo and visualization
 
 
-
-
 ### Install commands in short
 ```console
 foo@bar:~$ pip3 install torch torchvision torchaudio
