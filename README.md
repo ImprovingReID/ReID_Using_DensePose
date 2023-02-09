@@ -14,8 +14,20 @@ Denspose is found within the Detectron2 repository at Detectron2/projects/Densep
 
 Denspose needs a config file which we have choosen to include locally in this repository, you can find these files at [Densepose/configs](https://github.com/facebookresearch/detectron2/tree/main/projects/DensePose/configs)
 
+### Requirements
+
+* Linux or macOS with Python ≥ 3.7
+
+* PyTorch ≥ 1.8 and torchvision that matches the PyTorch installation. Install them together at [pytorch.org](pytorch.org) to make sure of this
+
+* OpenCV is optional but needed by demo and visualization
+
+
+
+
 ### Install commands in short
 ```console
+foo@bar:~$ pip3 install torch torchvision torchaudio
 foo@bar:~$ python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 foo@bar:~$ python3 -m pip install git+https://github.com/facebookresearch/detectron2@main#subdirectory=projects/DensePose
 ```
