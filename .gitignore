@@ -1,3 +1,4 @@
 data/*
 .bash_history
-scripts/docker_run.sh
+.config
+.cache
