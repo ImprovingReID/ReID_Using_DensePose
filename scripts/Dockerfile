@@ -1,4 +1,4 @@
-FROM docker-prod.se.axis.com/axis/debian-jenkins-slave:buster
+FROM docker-prod.se.axis.com/axis/debian-jenkins-slave:buster AS reid
 
 # Work directory
 ENV HOME=/ReID_Using_DensePose
@@ -10,6 +10,11 @@ ENV PATH="$PYENV_ROOT/bin:$HOME/.local/bin:$PATH"
 ENV PYTHON_VERSION=${PYTHON_VERSION}
 
 WORKDIR $HOME
+
+
+RUN sudo chmod -R 775 ${HOME}
+RUN sudo chown -R svcj:axusers ${HOME}
+RUN sudo useradd -o svcfalab -u 11148 -g sudo -G axusers
 
 RUN pip install opencv-python
 RUN pip3 install torch torchvision torchaudio
