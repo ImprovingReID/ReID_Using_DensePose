@@ -7,7 +7,7 @@ PIP_CONSTRAINT=/ReID_Using_DensePose/scripts/constraints.txt
 export PIP_CONSTRAINT
 python3 -m pip install pip
 python3 -m pip install \
-  -r /ReID_Using_DensePose/Docker/requirements.in
+  -r /ReID_Using_DensePose/scripts/requirements.in
 
 # Step into working directory
 # cd /kpi_workspace
