@@ -2,3 +2,4 @@ data/*
 .bash_history
 .config
 .cache
+__pycache__
