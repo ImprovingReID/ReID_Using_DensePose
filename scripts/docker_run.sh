@@ -16,4 +16,4 @@ docker run --net=host \
     -v $HOME/.ssh:$HOME/.ssh:ro \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -it \
-    reid bash
+    reid /ReID_Using_DensePose/scripts/init.sh

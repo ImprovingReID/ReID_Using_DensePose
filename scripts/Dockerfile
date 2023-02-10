@@ -16,9 +16,6 @@ RUN sudo chmod -R 775 ${HOME}
 RUN sudo chown -R svcj:axusers ${HOME}
 RUN sudo useradd -o svcfalab -u 11148 -g sudo -G axusers
 
-RUN pip install opencv-python
-RUN pip3 install torch torchvision torchaudio
-RUN pip install matplotlib
-RUN pip install tqdm
-RUN python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
-RUN python3 -m pip install git+https://github.com/facebookresearch/detectron2@main#subdirectory=projects/DensePose
+
+# RUN python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
+# RUN python3 -m pip install git+https://github.com/facebookresearch/detectron2@main#subdirectory=projects/DensePose

@@ -1,3 +1,8 @@
-torch
+torch 
+torchvision
+torchaudio
+matplotlib
+tqdm
+tk
 opencv-python
 
