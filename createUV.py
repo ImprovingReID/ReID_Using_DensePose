@@ -1,5 +1,4 @@
-
-import projects.DensePose.apply_net as an
+import detectron2.projects.DensePose.apply_net  as an
 
 import unpack_IUV 
 import torch 

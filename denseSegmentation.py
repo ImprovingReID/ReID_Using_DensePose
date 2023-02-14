@@ -74,12 +74,9 @@ def denseSegmentor(dataset_dir,output_dir, crop = False):
             cuv.texture(pkl_file , pkl_dir,directory = person_dir + '/' + "crops"  ,savedir = person_dir + '/' + "uv_maps/")
 
 
-def market1501():
-    output_dir= 'data/SegmentedMarket1501'
+def market1501(output_dir, images_dir):
     
     Path(output_dir).mkdir(exist_ok=True, parents=True)
-
-    images_dir = 'data/Market-1501-v15.09.15/gt_bbox'
     for image in os.listdir(images_dir):
         f = os.path.join(images_dir, image)
         if os.path.isfile(f):
@@ -106,4 +103,6 @@ def market1501():
             cuv.texture(pkl_file , pkl_dir,directory = person_dir + '/' + "crops"  ,savedir = person_dir + '/' + "uv_maps/")
 
 if __name__ == '__main__':    
-    market1501()
+    output_dir= '../market1501/SegmentedMarket1501'
+    images_dir = '/mnt/analyticsvideo/DensePoseData/market1501/Market-1501-v15.09.15/gt_bbox'
+    market1501(output_dir, images_dir)
