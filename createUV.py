@@ -96,6 +96,7 @@ def texture(pkl_file, pkl_dir = None, directory = None, savedir = 'data/textures
         plt.axis('off')
         plt.imshow(uv_texture)
         plt.savefig(outpath)   
+        plt.close()
         return outpath
 
 if __name__ == '__main__':

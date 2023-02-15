@@ -4,8 +4,8 @@ import copy
 import cv2  
 import tkinter
 import matplotlib
-import matplotlib.pyplot as plt
 matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 import torch
