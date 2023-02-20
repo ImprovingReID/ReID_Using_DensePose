@@ -1,4 +1,4 @@
-from detectron2.densepose import apply_net as an
+import apply_net as an
 
 import unpack_IUV 
 import torch 
