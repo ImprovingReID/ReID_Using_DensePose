@@ -48,7 +48,7 @@ class ResNet50_bb(nn.Module):
         self.layer3 = self._make_layer(ResNet50Block, 256, 6, stride=2)
         #self.layer4 = self._make_layer(ResNet50Block, 512, 3, stride=2)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(1024, 128)
+        self.fc = nn.Linear(1024, 2048)
 
     def _make_layer(self, block, out_channels, num_blocks, stride):
         layers = []
@@ -110,15 +110,15 @@ class ResNet18_bb(nn.Module):
         self.layer1 = self._make_layer(ResNet18Block, 64, 2, stride=2)
         self.layer2 = self._make_layer(ResNet18Block, 128, 2, stride=2)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(1024, 128)
+        self.fc = nn.Linear(1024, 256)
 
     def _make_layer(self, block, out_channels, num_blocks, stride):
         layers = []
         layers.append(block(self.in_channels, out_channels, stride))
-        self.in_channels = out_channels * 4
+        self.in_channels = out_channels
         for i in range(num_blocks - 1):
             layers.append(block(self.in_channels, out_channels))
-            self.in_channels = out_channels * 4
+            self.in_channels = out_channels
         return nn.Sequential(*layers)
 
     def forward(self, x):
@@ -127,6 +127,13 @@ class ResNet18_bb(nn.Module):
         out = self.relu(out)
         out = self.layer1(out)
         out = self.layer2(out)
+        out = self.avgpool(out)
+        out = out.view(out.size(0), -1)
+        out = self.fc(out)
+        return out
+
+    def forward2(self, x):
+        out = self.layer2(x)
         out = self.avgpool(out)
         out = out.view(out.size(0), -1)
         out = self.fc(out)
