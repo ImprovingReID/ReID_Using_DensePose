@@ -10,6 +10,7 @@ import time
 import itertools
 
 from backbone import ResNet50_bb
+from head import Head, MainHead, DenseHead
 from loss import TripletLoss
 from triplet_selector import BatchHardTripletSelector
 from batch_sampler import BatchSampler
@@ -26,13 +27,17 @@ def train():
 
     ## model and loss
     logger.info('setting up backbone model and loss')
-    net = ResNet50_bb().cuda()
-    net = nn.DataParallel(net)
+    mainNet = ResNet50_bb().cuda()
+    mainNet = nn.DataParallel(mainNet)
+
+    mainHead = MainHead().cuda()
+    mainHead = nn.DataParallel(mainHead)
+
     triplet_loss = TripletLoss(margin = None).cuda() # no margin means soft-margin
 
     ## optimizer
     logger.info('creating optimizer')
-    optim = AdamOptimWrapper(net.parameters(), lr = 3e-3, wd = 0, t0 = 15000, t1 = 25000)
+    optim = AdamOptimWrapper(mainNet.parameters(), lr = 3e-3, wd = 0, t0 = 15000, t1 = 25000)
 
     ## dataloader
     selector = BatchHardTripletSelector()
@@ -52,12 +57,15 @@ def train():
         except StopIteration:
             diter = iter(dl)
             imgs, lbs, _ = next(diter)
-
-        net.train()
+        mainNet.train()
         imgs = imgs.cuda()
         lbs = lbs.cuda()
-        embds = net(imgs)
-        anchor, positives, negatives = selector(embds, lbs)
+        mainEmbds = mainNet(imgs)
+        mainGlobalEmbds, mainLocalEmbeds = mainHead(mainEmbds)
+        print(mainGlobalEmbds.shape)
+        print(mainLocalEmbeds.shape)
+
+        anchor, positives, negatives = selector(mainGlobalEmbds, lbs)
 
         loss = triplet_loss(anchor, positives, negatives)
         optim.zero_grad()
