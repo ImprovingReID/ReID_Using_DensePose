@@ -60,10 +60,11 @@ def train():
         mainNet.train()
         imgs = imgs.cuda()
         lbs = lbs.cuda()
+        print(imgs.shape)
         mainEmbds = mainNet(imgs)
         mainGlobalEmbds, mainLocalEmbeds = mainHead(mainEmbds)
-        print(mainGlobalEmbds.shape)
-        print(mainLocalEmbeds.shape)
+        #print(mainGlobalEmbds.shape)
+        #print(mainLocalEmbeds.shape)
 
         anchor, positives, negatives = selector(mainGlobalEmbds, lbs)
 

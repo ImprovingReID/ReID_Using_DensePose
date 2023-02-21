@@ -79,33 +79,6 @@ class ResNet50_bb(nn.Module):
 class ResNet18Block(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1):
         super(ResNet18Block, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
-        self.bn1 = nn.BatchNorm2d(out_channels)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1)
-        self.bn2 = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(inplace=True)
-        self.downsample = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride),
-            nn.BatchNorm2d(out_channels)
-        )
-
-    def forward(self, x):
-        residual = x
-        out = self.conv1(x)
-        #out = self.bn1(out)
-        out = self.relu(out)
-        out = self.conv2(out)
-        #out = self.bn2(out)
-        out = self.relu(out)
-        if self.downsample is not None:
-            residual = self.downsample(x)
-        out += residual
-        out = self.relu(out)
-        return out
-
-class BasicBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, stride=1):
-        super(BasicBlock, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=True)
@@ -122,11 +95,11 @@ class BasicBlock(nn.Module):
     def forward(self, x):
         identity = x
         out = self.conv1(x)
-        #out = self.bn1(out)
+        out = self.bn1(out)
         out = self.relu(out)
         
         out = self.conv2(out)
-        #out = self.bn2(out)
+        out = self.bn2(out)
         
         identity = self.downsample(identity)
         out += identity
@@ -143,8 +116,8 @@ class ResNet18_bb(nn.Module):
         self.conv2 = nn.Conv2d(32,64, kernel_size=3, stride=1,padding=1,bias=False)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self._make_layer(BasicBlock, 64, 2, stride=2)
-        self.layer2 = self._make_layer(BasicBlock, 128, 2, stride=2)
+        self.layer1 = self._make_layer(ResNet18Block, 64, 2, stride=2)
+        self.layer2 = self._make_layer(ResNet18Block, 128, 2, stride=2)
         #self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         #self.fc = nn.Linear(1024, 256)
 
@@ -162,7 +135,7 @@ class ResNet18_bb(nn.Module):
         outs = [None in range(24)]
         for i in range(24):
             outs[i] = self.conv1(x[i])
-            #outs[i] = self.bn1(outs[i])
+            outs[i] = self.bn1(outs[i])
             outs[i] = self.relu(outs[i])
             outs[i] = self.layer1(outs[i])
 
