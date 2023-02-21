@@ -76,9 +76,9 @@ class DensePose1501(Dataset):
         self.imgs = [os.path.join(data_path, el) for el in self.imgs]
         if is_train:
             self.trans = transforms.Compose([
-                transforms.Resize((288, 144)),
-                transforms.RandomCrop((256, 128)),
-                transforms.RandomHorizontalFlip(),
+                transforms.Resize((128, 192)),
+                # transforms.RandomCrop((256, 128)),
+                # transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize((0.486, 0.459, 0.408), (0.229, 0.224, 0.225)),
                 RandomErasing(0.5, mean=[0.0, 0.0, 0.0])
@@ -122,12 +122,6 @@ if __name__ == "__main__":
     print(im.shape)
     print(im.max())
     print(im.min())
-    # import numpy
-    # import matplotlib.pyplot as plt
-    # img = im.numpy().transpose(1, 2, 0)
-    # print(img.shape)
-    # plt.imshow(img)
-    # plt.show()
     ran_er = RandomErasing()
     im = ran_er(im)
     cv2.imshow('erased', im)
