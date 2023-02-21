@@ -1,7 +1,8 @@
-import detectron2.projects.DensePose.apply_net  as an
+import apply_net as an
 
 import unpack_IUV 
 import torch 
+device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('TkAgg')
@@ -75,12 +76,11 @@ def texture(pkl_file, pkl_dir = None, directory = None, savedir = 'data/textures
     impath = directory + '/' + filename + '.jpg'
 
     with open(pkl_dir + pkl_file, 'rb') as f:
-        data = torch.load(f)
-        # items = loadall(pkl_file)
+        data = torch.load(f, map_location=device)
+        
     if 'pred_densepose' in  data[0]:
         i = data[0]['pred_densepose'][0].labels.cpu().numpy()
         uv = data[0]['pred_densepose'][0].uv.cpu().numpy()
-
         # I assume the data are stored in pickle, and you are able to read them 
         results = data[0]
         iuv = unpack_IUV.parse_iuv(results)
@@ -90,13 +90,8 @@ def texture(pkl_file, pkl_dir = None, directory = None, savedir = 'data/textures
         
         if not os.path.exists(savedir):
             os.makedirs(savedir)
-
-        plt.ioff
-        plt.figure(frameon=False)
-        plt.axis('off')
-        plt.imshow(uv_texture)
-        plt.savefig(outpath)   
-        plt.close()
+        plt.imsave(outpath,uv_texture)
+        
         return outpath
 
 if __name__ == '__main__':

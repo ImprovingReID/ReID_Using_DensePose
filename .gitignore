@@ -4,3 +4,6 @@ data/*
 .cache
 __pycache__
 SegmentedMarket1501
+detectron21
+env
+test.py
