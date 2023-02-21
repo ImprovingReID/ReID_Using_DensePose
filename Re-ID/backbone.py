@@ -68,6 +68,7 @@ class ResNet50_bb(nn.Module):
         out = self.maxpool(out)
         out = self.layer1(out)
         out = self.layer3(out)
+        print(out.shape)
         # out = self.avgpool(out)
         # print(out.shape)
         # out = out.view(out.size(0), -1)
@@ -110,7 +111,7 @@ class ResNet18Block(nn.Module):
 class ResNet18_bb(nn.Module):
     def __init__(self):
         super(ResNet18_bb, self).__init__()
-        self.in_channels = 32
+        self.in_channels = 64
         self.conv1 = nn.Conv2d(3, 32, kernel_size=5, stride=1, padding=2, bias=False)
         self.bn1 = nn.BatchNorm2d(32)
         self.conv2 = nn.Conv2d(32,64, kernel_size=3, stride=1,padding=1,bias=False)
@@ -137,6 +138,8 @@ class ResNet18_bb(nn.Module):
             outs[i] = self.conv1(x[i])
             outs[i] = self.bn1(outs[i])
             outs[i] = self.relu(outs[i])
+            outs[i] = self.conv2(outs[i])
+            outs[i] = self.relu(outs[i])
             outs[i] = self.layer1(outs[i])
 
         # Merge round 1
@@ -148,7 +151,7 @@ class ResNet18_bb(nn.Module):
 
         # Merge round 2
         outs = merge2(outs)
-        
+        print(outs.shape)
         return outs
 
 def merge1(X):

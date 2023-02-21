@@ -22,8 +22,8 @@ class MainHead(Head):
         G = self.layerG(x)
         G = self.avgpool(G)
         G = G.view(G.size(0), -1)
-        print(x.shape)
 
+        # 1024x8x8 or 128x32x16?
         L = [None]*8
         h, w = int(x.shape[2]/4), int(x.shape[3]/2)
         k=0
@@ -34,7 +34,6 @@ class MainHead(Head):
                 L[k] = self.avgpool(L[k])
                 L[k] = L[k].view(L[k].size(0), -1)
                 k+=1
-        print(L[0].shape)
         L = torch.cat((L[0], L[1], L[2], L[3], L[4], L[5], L[6], L[7]),1)
 
         return G, L
@@ -54,11 +53,12 @@ class MainHead(Head):
 class DenseHead(Head):
     def __init__(self):
         super(DenseHead,self).__init__()
-        self.layerG = self._make_layer(ResNet18Block, 2048, 2, stride=2)
-        self.layerL = self._make_layer(ResNet18Block, 256, 2, stride=2)
+        self.layerG = self._make_layer(ResNet18Block, 2048, 2, stride=1)
+        self.layerL = self._make_layer(ResNet18Block, 256, 2, stride=1)
 
     def forward(self, L):
-        G = torch.cat(())
+        G = torch.cat()
+        G = self.layerG(G)
 
     def _make_layer(self, block, out_channels, num_blocks, stride):
         layers = []

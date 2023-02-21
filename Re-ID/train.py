@@ -9,12 +9,12 @@ import logging
 import time
 import itertools
 
-from backbone import ResNet50_bb
+from backbone import ResNet50_bb, ResNet18_bb
 from head import Head, MainHead, DenseHead
 from loss import TripletLoss
 from triplet_selector import BatchHardTripletSelector
 from batch_sampler import BatchSampler
-from Market1501 import Market1501
+from Market1501 import Market1501, DensePose1501
 from optimizer import AdamOptimWrapper
 from logger import logger
 
@@ -29,6 +29,8 @@ def train():
     logger.info('setting up backbone model and loss')
     mainNet = ResNet50_bb().cuda()
     mainNet = nn.DataParallel(mainNet)
+    DSAGNet = ResNet18_bb().cuda()
+    DSAGNet = nn.DataParallel(DSAGNet)
 
     mainHead = MainHead().cuda()
     mainHead = nn.DataParallel(mainHead)
@@ -39,12 +41,16 @@ def train():
     logger.info('creating optimizer')
     optim = AdamOptimWrapper(mainNet.parameters(), lr = 3e-3, wd = 0, t0 = 15000, t1 = 25000)
 
-    ## dataloader
+    ## /mnt/analyticsvideo/DensePoseData/market1501/SegmentedMarket1501train
     selector = BatchHardTripletSelector()
     ds = Market1501('/mnt/analyticsvideo/DensePoseData/market1501/Market-1501-v15.09.15/bounding_box_train', is_train = True)
+    ds_dense = DensePose1501('/mnt/analyticsvideo/DensePoseData/market1501/SegmentedMarket1501train', is_train = True)
     sampler = BatchSampler(ds, 18, 4)
+    sampler_dense = BatchSampler(ds_dense,18,4)
     dl = DataLoader(ds, batch_sampler = sampler, num_workers = 4)
+    dl_dense = DataLoader(ds_dense, batch_sampler = sampler_dense, num_workers = 4)
     diter = iter(dl)
+    diter_dense = iter(dl_dense)
 
     ## train
     logger.info('start training ...')
@@ -53,15 +59,23 @@ def train():
     t_start = time.time()
     while True:
         try:
+            print(1)
             imgs, lbs, _ = next(diter)
+            imgs_dense, lbs_dense = next(diter_dense)
         except StopIteration:
             diter = iter(dl)
+            diter_dense = iter(dl_dense)
             imgs, lbs, _ = next(diter)
+            imgs_dense, lbs_dense = next(diter_dense)
         mainNet.train()
+        DSAGNet.train()
         imgs = imgs.cuda()
         lbs = lbs.cuda()
-        print(imgs.shape)
+        imgs_dense = imgs_dense.cuda()
+        lbs_dense = lbs_dense.cuda()
+        #print(imgs.shape)
         mainEmbds = mainNet(imgs)
+        DSAGEmbeds = DSAGNet(imgs_dense)
         mainGlobalEmbds, mainLocalEmbeds = mainHead(mainEmbds)
         #print(mainGlobalEmbds.shape)
         #print(mainLocalEmbeds.shape)
