@@ -68,7 +68,7 @@ class ResNet50_bb(nn.Module):
         out = self.maxpool(out)
         out = self.layer1(out)
         out = self.layer3(out)
-        print(out.shape)
+        #print(out.shape)
         # out = self.avgpool(out)
         # print(out.shape)
         # out = out.view(out.size(0), -1)
@@ -131,9 +131,16 @@ class ResNet18_bb(nn.Module):
             self.in_channels = out_channels
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, input):
         # Run part 1 for 24 DP-images
-        outs = [None in range(24)]
+        x = [None] * 24
+        k = 0
+        for i in range(4):
+            for j in range(6):
+                x[k] = input[:,:,i*32:(i+1)*32,j*32:(j+1)*32].to(torch.float).to('cuda')
+                k+=1  
+
+        outs = [None]*24
         for i in range(24):
             outs[i] = self.conv1(x[i])
             outs[i] = self.bn1(outs[i])
@@ -141,7 +148,6 @@ class ResNet18_bb(nn.Module):
             outs[i] = self.conv2(outs[i])
             outs[i] = self.relu(outs[i])
             outs[i] = self.layer1(outs[i])
-
         # Merge round 1
         outs = merge1(outs)
 
@@ -151,11 +157,10 @@ class ResNet18_bb(nn.Module):
 
         # Merge round 2
         outs = merge2(outs)
-        print(outs.shape)
         return outs
 
 def merge1(X):
-     merged_X = [None in range(13)]
+     merged_X = [None]*13
      merged_X[0], merged_X[1] = X[0], X[1]
      i=2
      for k in range(2,24,2):
@@ -164,7 +169,7 @@ def merge1(X):
      return merged_X
 
 def merge2(X):
-    merged_X = [None in range(8)]
+    merged_X = [None]*8
     merged_X[0] = X[0] + X[1]
     merged_X[1] = X[2]
     merged_X[2] = X[3]

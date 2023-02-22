@@ -53,14 +53,25 @@ class MainHead(Head):
 class DenseHead(Head):
     def __init__(self):
         super(DenseHead,self).__init__()
+        self.in_channels = 1024
         self.layerG = self._make_layer(ResNet18Block, 2048, 2, stride=1)
-        self.layerL = self._make_layer(ResNet18Block, 256, 2, stride=1)
+        self.layerL = self._make_layer(ResNet18Block, 256, 2, stride=1, local = True)
 
     def forward(self, L):
-        G = torch.cat()
-        G = self.layerG(G)
+        G = L#torch.cat()
+        #G = self.layerG(G)
 
-    def _make_layer(self, block, out_channels, num_blocks, stride):
+        for i in range(8):
+            L[i] = self.layerL(L[i])
+            L[i] = self.avgpool(L[i])
+            L[i] = L[i].view(L[i].size(0), -1)
+
+        L = torch.cat((L[0], L[1], L[2], L[3], L[4], L[5], L[6], L[7]),1)
+        return G,L
+
+    def _make_layer(self, block, out_channels, num_blocks, stride, local = False):
+        if local:
+            self.in_channels = 128
         layers = []
         layers.append(block(self.in_channels, out_channels, stride))
         self.in_channels = out_channels

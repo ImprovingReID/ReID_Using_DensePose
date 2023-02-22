@@ -34,6 +34,8 @@ def train():
 
     mainHead = MainHead().cuda()
     mainHead = nn.DataParallel(mainHead)
+    denseHead = DenseHead().cuda()
+    denseHead = nn.DataParallel(denseHead)
 
     triplet_loss = TripletLoss(margin = None).cuda() # no margin means soft-margin
 
@@ -44,7 +46,7 @@ def train():
     ## /mnt/analyticsvideo/DensePoseData/market1501/SegmentedMarket1501train
     selector = BatchHardTripletSelector()
     ds = Market1501('/mnt/analyticsvideo/DensePoseData/market1501/Market-1501-v15.09.15/bounding_box_train', is_train = True)
-    ds_dense = DensePose1501('/mnt/analyticsvideo/DensePoseData/market1501/SegmentedMarket1501train', is_train = True)
+    ds_dense = DensePose1501('/mnt/analyticsvideo/DensePoseData/market1501/SegmentedMarket1501train/uv_maps', is_train = True)
     sampler = BatchSampler(ds, 18, 4)
     sampler_dense = BatchSampler(ds_dense,18,4)
     dl = DataLoader(ds, batch_sampler = sampler, num_workers = 4)
@@ -52,34 +54,35 @@ def train():
     diter = iter(dl)
     diter_dense = iter(dl_dense)
 
-    ## train
+    # train
     logger.info('start training ...')
     loss_avg = []
     count = 0
     t_start = time.time()
     while True:
         try:
-            print(1)
             imgs, lbs, _ = next(diter)
-            imgs_dense, lbs_dense = next(diter_dense)
+            imgs_dense, lbs_dense, _ = next(diter_dense)
         except StopIteration:
             diter = iter(dl)
             diter_dense = iter(dl_dense)
             imgs, lbs, _ = next(diter)
-            imgs_dense, lbs_dense = next(diter_dense)
+            imgs_dense, lbs_dense, _ = next(diter_dense)
         mainNet.train()
         DSAGNet.train()
+        
         imgs = imgs.cuda()
         lbs = lbs.cuda()
         imgs_dense = imgs_dense.cuda()
         lbs_dense = lbs_dense.cuda()
-        #print(imgs.shape)
-        mainEmbds = mainNet(imgs)
-        DSAGEmbeds = DSAGNet(imgs_dense)
-        mainGlobalEmbds, mainLocalEmbeds = mainHead(mainEmbds)
-        #print(mainGlobalEmbds.shape)
-        #print(mainLocalEmbeds.shape)
 
+        mainEmbds = mainNet(imgs)
+        DSAGEmbds = DSAGNet(imgs_dense)
+
+        mainGlobalEmbds, mainLocalEmbds = mainHead(mainEmbds)
+        denseGlobalEmbds, denseLocalEmbds = denseHead(DSAGEmbds)
+        #print(mainGlobalEmbds.shape)
+        #print(mainLocalEmbds.shape)
         anchor, positives, negatives = selector(mainGlobalEmbds, lbs)
 
         loss = triplet_loss(anchor, positives, negatives)
@@ -99,7 +102,7 @@ def train():
         count += 1
         if count == 1000: break
 
-    ## dump model
+    # dump model
     logger.info('saving trained model')
     torch.save(net.module.state_dict(), './res/model.pkl')
 
