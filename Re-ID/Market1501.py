@@ -122,6 +122,11 @@ if __name__ == "__main__":
     print(im.shape)
     print(im.max())
     print(im.min())
+    
+    import torchvision.transforms as T
+    transform = T.ToPILImage()
+    img = transform(im)
+    img.show()
     ran_er = RandomErasing()
     im = ran_er(im)
     cv2.imshow('erased', im)
