@@ -109,9 +109,9 @@ class DensePose1501(Dataset):
 
     def __getitem__(self, idx):
         img = Image.open(self.imgs[idx])
-        #print(type(img))
+        print(type(img))
         img = self.trans(img)
-        #print(type(img))       
+        print(type(img))        
         return img, self.lb_ids[idx], self.lb_cams[idx]
 
 
@@ -122,6 +122,11 @@ if __name__ == "__main__":
     print(im.shape)
     print(im.max())
     print(im.min())
+    
+    import torchvision.transforms as T
+    transform = T.ToPILImage()
+    img = transform(im)
+    img.show()
     ran_er = RandomErasing()
     im = ran_er(im)
     cv2.imshow('erased', im)
