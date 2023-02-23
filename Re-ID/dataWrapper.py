@@ -10,12 +10,12 @@ from PIL import Image
 from random_erasing import RandomErasing
 
 
-class Market1501(Dataset):
+class Wrapper(Dataset):
     '''
-    a wrapper of Market1501 dataset
+    A wrapper for our datasets
     '''
     def __init__(self, data_path, data_path_dense, is_train = True, *args, **kwargs):
-        super(Market1501, self).__init__(*args, **kwargs)
+        super(Wrapper, self).__init__(*args, **kwargs)
         self.is_train = is_train
         self.data_path = data_path
         self.data_path_dense = data_path_dense
@@ -85,20 +85,3 @@ class Market1501(Dataset):
         img_dense = Image.open(self.imgs_dense[idx])
         img_dense = self.trans_dense(img_dense)
         return img, img_dense, self.lb_ids[idx]
-
-
-if __name__ == "__main__":
-    ds = Market1501('/mnt/analyticsvideo/DensePoseData/market1501/Market-1501-v15.09.15/bounding_box_train', is_train = True)
-    im, _, _ = ds[0]
-    print(im.shape)
-    print(im.max())
-    print(im.min())
-    
-    import torchvision.transforms as T
-    transform = T.ToPILImage()
-    img = transform(im)
-    img.show()
-    ran_er = RandomErasing()
-    im = ran_er(im)
-    cv2.imshow('erased', im)
-    cv2.waitKey(0)

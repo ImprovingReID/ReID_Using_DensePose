@@ -19,7 +19,6 @@ class BatchSampler(Sampler):
         self.n_num = n_num
         self.batch_size = n_class * n_num
         self.dataset = dataset
-        #self.denseset = denseset
         self.labels = np.array(dataset.lb_ids)
         self.labels_uniq = np.array(list(dataset.lb_ids_uniq))
         self.len = len(dataset) // self.batch_size
@@ -48,17 +47,3 @@ class BatchSampler(Sampler):
     def __len__(self):
         return self.iter_num
 
-
-if __name__ == "__main__":
-    import Market1501
-    ds = Market1501('/mnt/analyticsvideo/DensePoseData/market1501/Market-1501-v15.09.15/bounding_box_train', is_train = False)
-    sampler = BatchSampler(ds, 18, 4)
-    dl = DataLoader(ds, batch_sampler = sampler, num_workers = 4)
-    import itertools
-
-    diter = itertools.cycle(dl)
-
-    while True:
-        ims, lbs, _ = next(diter)
-        print(lbs.shape)
-    print(len(list(ds.lb_ids_uniq)))

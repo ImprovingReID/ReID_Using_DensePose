@@ -46,9 +46,7 @@ class ResNet50_bb(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(ResNet50Block, 64, 3, stride=1)
-        #self.layer2 = self._make_layer(ResNet50Block, 128, 4, stride=2)
         self.layer3 = self._make_layer(ResNet50Block, 256, 6, stride=2)
-        #self.layer4 = self._make_layer(ResNet50Block, 512, 3, stride=2)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(1024, 2048)
 
@@ -68,13 +66,6 @@ class ResNet50_bb(nn.Module):
         out = self.maxpool(out)
         out = self.layer1(out)
         out = self.layer3(out)
-        #print(out.shape)
-        # out = self.avgpool(out)
-        # print(out.shape)
-        # out = out.view(out.size(0), -1)
-        # print(out.shape)
-        # out = self.fc(out)
-        # print(out.shape)
         return out
 
 class ResNet18Block(nn.Module):
@@ -119,8 +110,6 @@ class ResNet18_bb(nn.Module):
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(ResNet18Block, 64, 2, stride=2)
         self.layer2 = self._make_layer(ResNet18Block, 128, 2, stride=2)
-        #self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        #self.fc = nn.Linear(1024, 256)
 
     def _make_layer(self, block, out_channels, num_blocks, stride):
         layers = []
@@ -180,16 +169,3 @@ def merge2(X):
     merged_X[7] = X[12]
     return merged_X
 
-if __name__ == '__main__':
-    # model = ResNet18_bb().to('cuda')
-    # im_path = '/mnt/analyticsvideo/DensePoseData/market1501/SegmentedMarket1501train/0002/uv_maps'
-    # im = read_image(im_path + '/0002_c1s1_000451_03_texture.jpg')
-    # x = [None] * 24
-    # k = 0
-    # for i in range(4):
-    #     for j in range(6):
-    #         x[k] = im[:,i*200:(i+1)*200,j*200:(j+1)*200].to(torch.float).to('cuda')
-    #         k+=1   
-
-    # x = model(x).to('cuda')
-    pass
