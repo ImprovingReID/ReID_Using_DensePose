@@ -10,11 +10,11 @@ import time
 import itertools
 
 from backbone import ResNet50_bb, ResNet18_bb
-from head import Head, MainHead, DenseHead
+from head import MainHead, DenseHead
 from loss import TripletLoss
 from triplet_selector import BatchHardTripletSelector
 from batch_sampler import BatchSampler
-from Market1501 import Market1501, DensePose1501
+from Market1501 import Market1501
 from optimizer import AdamOptimWrapper
 from logger import logger
 
@@ -45,14 +45,16 @@ def train():
 
     ## /mnt/analyticsvideo/DensePoseData/market1501/SegmentedMarket1501train
     selector = BatchHardTripletSelector()
-    ds = Market1501('/mnt/analyticsvideo/DensePoseData/market1501/Market-1501-v15.09.15/bounding_box_train', is_train = True)
-    ds_dense = DensePose1501('/mnt/analyticsvideo/DensePoseData/market1501/SegmentedMarket1501train/uv_maps', is_train = True)
+    ds = Market1501('/mnt/analyticsvideo/DensePoseData/market1501/market1501/bounding_box_train','/mnt/analyticsvideo/DensePoseData/market1501/market1501/uv_maps_train', is_train = True)
+    # = DensePose1501('/mnt/analyticsvideo/DensePoseData/market1501/SegmentedMarket1501train/uv_maps', is_train = True)
     sampler = BatchSampler(ds, 18, 4)
-    sampler_dense = BatchSampler(ds_dense,18,4)
+    #sampler_dense = BatchSampler(ds_dense,18,4)
+    #sampler_dense = sampler
     dl = DataLoader(ds, batch_sampler = sampler, num_workers = 4)
-    dl_dense = DataLoader(ds_dense, batch_sampler = sampler_dense, num_workers = 4)
+    #dl_dense = DataLoader(ds_dense, batch_sampler = sampler_dense, num_workers = 4)
+    #dl_dense = DataLoader(ds_dense, batch_sampler = sampler_dense, num_workers = 4)
     diter = iter(dl)
-    diter_dense = iter(dl_dense)
+    #diter_dense = iter(dl_dense)
 
     # train
     logger.info('start training ...')
@@ -61,28 +63,24 @@ def train():
     t_start = time.time()
     while True:
         try:
-            imgs, lbs, _ = next(diter)
-            imgs_dense, lbs_dense, _ = next(diter_dense)
+            imgs, imgs_dense, lbs = next(diter)
         except StopIteration:
-            diter = iter(dl)
-            diter_dense = iter(dl_dense)
-            imgs, lbs, _ = next(diter)
-            imgs_dense, lbs_dense, _ = next(diter_dense)
+            imgs, imgs_dense, lbs = next(diter)
         mainNet.train()
         DSAGNet.train()
-        
+
         imgs = imgs.cuda()
         lbs = lbs.cuda()
         imgs_dense = imgs_dense.cuda()
-        lbs_dense = lbs_dense.cuda()
 
         mainEmbds = mainNet(imgs)
         DSAGEmbds = DSAGNet(imgs_dense)
 
         mainGlobalEmbds, mainLocalEmbds = mainHead(mainEmbds)
         denseGlobalEmbds, denseLocalEmbds = denseHead(DSAGEmbds)
-        #print(mainGlobalEmbds.shape)
-        #print(mainLocalEmbds.shape)
+        globalEmbds = mainGlobalEmbds + denseGlobalEmbds
+        localEmbds = mainLocalEmbds + denseLocalEmbds
+    
         anchor, positives, negatives = selector(mainGlobalEmbds, lbs)
 
         loss = triplet_loss(anchor, positives, negatives)

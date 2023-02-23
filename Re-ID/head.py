@@ -58,8 +58,10 @@ class DenseHead(Head):
         self.layerL = self._make_layer(ResNet18Block, 256, 2, stride=1, local = True)
 
     def forward(self, L):
-        G = L#torch.cat()
-        #G = self.layerG(G)
+        G = torch.cat((L[0], L[1], L[2], L[3], L[4], L[5], L[6], L[7]),1)
+        G = self.layerG(G)
+        G = self.avgpool(G)
+        G = G.view(G.size(0),-1)
 
         for i in range(8):
             L[i] = self.layerL(L[i])

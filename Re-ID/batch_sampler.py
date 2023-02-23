@@ -19,6 +19,7 @@ class BatchSampler(Sampler):
         self.n_num = n_num
         self.batch_size = n_class * n_num
         self.dataset = dataset
+        #self.denseset = denseset
         self.labels = np.array(dataset.lb_ids)
         self.labels_uniq = np.array(list(dataset.lb_ids_uniq))
         self.len = len(dataset) // self.batch_size
