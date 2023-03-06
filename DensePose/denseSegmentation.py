@@ -44,19 +44,38 @@ def parse_train_json(train, data_dir, output_dir):
             
 
 
-def market1501(output_dir, images_dir):
+# def market1501(output_dir, images_dir):
     
-    Path(output_dir).mkdir(exist_ok=True, parents=True)
+#     Path(output_dir).mkdir(exist_ok=True, parents=True)
+#     for image in os.listdir(images_dir):
+#         f = os.path.join(images_dir, image)
+#         if os.path.isfile(f):
+
+#             person_dir = f"{output_dir}/{image[0:4]}"
+#             crop = cv2.imread(f)
+            
+#             make_folders(person_dir)
+#             fill_folders(image,crop,person_dir)
+
+def market1501(output_dir, images_dir):
     for image in os.listdir(images_dir):
         f = os.path.join(images_dir, image)
         if os.path.isfile(f):
 
-            person_dir = f"{output_dir}/{image[0:4]}"
-            crop = cv2.imread(f)
-            
-            make_folders(person_dir)
-            fill_folders(image,crop,person_dir)
-            
+            pkl_file , pkl_dir = cuv.create_pkl(image,images_dir,f"{output_dir}/pkl_files_test/")             
+            cuv.texture(pkl_file , pkl_dir, images_dir, f"{output_dir}/uv_maps_test/") 
+
+def fix(output_dir,images_dir):
+    for image in os.listdir(images_dir):
+        f = os.path.join(images_dir, image)
+        texture = os.path.join(output_dir,"uv_maps_test", image)
+        if os.path.isfile(f):
+            if not os.path.isfile(texture):
+                if not image == "Thumbs.db":
+                    print(texture)
+                    pkl_file , pkl_dir = cuv.create_pkl(image,images_dir,f"{output_dir}/pkl_files_test/")             
+                    cuv.texture(pkl_file , pkl_dir, images_dir, f"{output_dir}/uv_maps_test/") 
+        
 if __name__ == '__main__':    
     output_dir= '../market1501/SegmentedMarket1501train'
     images_dir = '../market1501/Market-1501-v15.09.15/bounding_box_train'
@@ -68,6 +87,6 @@ if __name__ == '__main__':
     Axis_lobby_train_out = '../Axis/AxisLobby2017Train'
     # market1501(output_dir, images_dir)
     #parse_train_json(ica_train_json,ica_train,ica_train_out)
-    parse_train_json(Axis_lobby_train_json,Axis_lobby_train,Axis_lobby_train_out)
-    
+    #parse_train_json(Axis_lobby_train_json,Axis_lobby_train,Axis_lobby_train_out)
+    fix("/home/bjornel/market1501", "/home/bjornel/market1501/bounding_box_test")
     
