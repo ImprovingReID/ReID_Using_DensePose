@@ -72,7 +72,7 @@ def create_mask(image , directory = None, visualization = 'dp_contour,bbox' , sa
 def texture(pkl_file, pkl_dir = None, directory = None, savedir = 'data/textures/'):
 
     filename = pkl_file.split('.')[0]
-    outpath = savedir + filename+ '_texture.jpg'
+    outpath = savedir + filename+ '.jpg'
     impath = directory + '/' + filename + '.jpg'
 
     with open(pkl_dir + pkl_file, 'rb') as f:
@@ -92,7 +92,12 @@ def texture(pkl_file, pkl_dir = None, directory = None, savedir = 'data/textures
             os.makedirs(savedir)
         plt.imsave(outpath,uv_texture)
         
-        return outpath
+    else:
+        array = np.zeros((800,1200), dtype='float')
+        plt.imsave(outpath, array.astype('uint8'), cmap=matplotlib.cm.gray, vmin=0, vmax=255)
+        print(outpath)
+        
+    return outpath
 
 if __name__ == '__main__':
     infere_images('data/images')
