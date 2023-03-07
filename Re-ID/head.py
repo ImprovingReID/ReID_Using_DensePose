@@ -82,5 +82,17 @@ class DenseHead(Head):
             self.in_channels = out_channels
         return nn.Sequential(*layers)
 
+class Classifier(nn.Module):
+    def __init__(self, in_features=2048, num_class=18):
+        super(Classifier, self).__init__()
+        self.fc1 = nn.Linear(in_features, 512)
+        self.fc2 = nn.Linear(512, num_class)
+        self.relu = nn.ReLU(inplace=True)
+        self.softmax = nn.Softmax(dim=1)
 
-
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        x = self.softmax(x)
+        return x
