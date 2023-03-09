@@ -14,7 +14,7 @@ class Wrapper(Dataset):
     '''
     A wrapper for our datasets
     '''
-    def __init__(self, data_path, data_path_dense, is_train = True, *args, **kwargs):
+    def __init__(self, data_path, data_path_dense = None, is_train = True, *args, **kwargs):
         super(Wrapper, self).__init__(*args, **kwargs)
         self.is_train = is_train
         self.data_path = data_path
@@ -82,6 +82,9 @@ class Wrapper(Dataset):
     def __getitem__(self, idx):
         img = Image.open(self.imgs[idx])
         img = self.trans(img)
-        img_dense = Image.open(self.imgs_dense[idx])
-        img_dense = self.trans_dense(img_dense)
-        return img, img_dense, self.lb_ids[idx]
+        if self.data_path_dense != None:
+            img_dense = Image.open(self.imgs_dense[idx])
+            img_dense = self.trans_dense(img_dense)
+            return img, img_dense, self.lb_ids[idx]
+        else:
+            return img, self.lb_ids[idx]

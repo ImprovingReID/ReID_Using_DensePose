@@ -61,7 +61,6 @@ def market1501(output_dir, images_dir):
     for image in os.listdir(images_dir):
         f = os.path.join(images_dir, image)
         if os.path.isfile(f):
-
             pkl_file , pkl_dir = cuv.create_pkl(image,images_dir,f"{output_dir}/pkl_files_test/")             
             cuv.texture(pkl_file , pkl_dir, images_dir, f"{output_dir}/uv_maps_test/") 
 
