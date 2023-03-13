@@ -29,10 +29,10 @@ def embed(load_path, store_path):
     ## restore model
     logger.info('restoring model')
     mainNet = ResNet50_bb().cuda()
-    mainNet.load_state_dict(torch.load('../../res/mainNet2.pkl'))
+    mainNet.load_state_dict(torch.load('res/mainNet2.pkl'))
     mainNet = nn.DataParallel(mainNet)
     mainHead = MainHead().cuda()
-    mainHead.load_state_dict(torch.load('../../res/mainHead2.pkl'))
+    mainHead.load_state_dict(torch.load('res/mainHead2.pkl'))
     mainHead = nn.DataParallel(mainHead)
     mainNet.eval()
     mainHead.eval()
@@ -49,10 +49,12 @@ def embed(load_path, store_path):
     embeddingsGlobal = []
     embeddingsLocal = []
     label_ids = []
-    for it, (img, lb_id) in enumerate(dl):
+    label_cams = []
+    for it, (img, lb_id, lb_cam) in enumerate(dl):
         print('\r=======>  processing iter {} / {}'.format(it, all_iter_nums),
                 end = '', flush = True)
         label_ids.append(lb_id)
+        label_cams.append(lb_cam)
         embdsLocal = []
         embdsGlobal = []
         for im in img:
@@ -73,14 +75,13 @@ def embed(load_path, store_path):
     embeddingsGlobal = np.vstack(embeddingsGlobal)
     embeddingsLocal = np.vstack(embeddingsLocal)
     label_ids = np.hstack(label_ids)
+    label_cams = np.hstack(label_cams)
 
     ## dump results
     logger.info('dump embeddings')
-    embd_res = {'embeddingsGlobal': embeddingsGlobal, 'embeddingLocal': embeddingsLocal, 'label_ids': label_ids}
-
+    embd_res = {'embeddingsGlobal': embeddingsGlobal, 'embeddingLocal': embeddingsLocal, 'label_ids': label_ids, 'label_cams': label_cams}
     with open(store_path, 'wb') as fw:
         pickle.dump(embd_res, fw)
-
     logger.info('embedding finished')
 
 
@@ -96,11 +97,11 @@ def evaluate(load_path1, load_path2):
     logger.info('loading gallery embeddings')
     with open(load_path1, 'rb') as fr:
         gallery_dict = pickle.load(fr)
-        embGlobal, embLocal, lb_ids = gallery_dict['embeddingsGlobal'], gallery_dict['embeddingLocal'], gallery_dict['label_ids']
+        embGlobal, embLocal, lb_ids, lb_cams = gallery_dict['embeddingsGlobal'], gallery_dict['embeddingLocal'], gallery_dict['label_ids'], gallery_dict['label_cams']
     logger.info('loading query embeddings')
     with open(load_path2 , 'rb') as fr:
         query_dict = pickle.load(fr)
-        embGlobal_query, embLocal_query, lb_ids_query = query_dict['embeddingsGlobal'], query_dict['embeddingLocal'], query_dict['label_ids']
+        embGlobal_query, embLocal_query, lb_ids_query, lb_cams_query = query_dict['embeddingsGlobal'], query_dict['embeddingLocal'], query_dict['label_ids'], query_dict['label_cams']
 
     ## compute and clean distance matrix
     embGallery = np.concatenate((embGlobal,embLocal),1)
@@ -111,26 +112,33 @@ def evaluate(load_path1, load_path2):
     print(dist_mtx.shape)
     n_q, n_g = dist_mtx.shape
     indices = np.argsort(dist_mtx, axis = 1)
-    print(indices.shape)
+    print(indices)
     print(lb_ids.shape)
     print(lb_ids_query.shape)
     matches = lb_ids[indices] == lb_ids_query[:, np.newaxis]
     matches = matches.astype(np.int32)
-    print(matches)
+    print(matches.shape)
     all_aps = []
     all_cmcs = []
     logger.info('starting evaluating ...')
     for qidx in range(n_q): #tqdm(range(n_q)):
         qpid = lb_ids_query[qidx]
+        qcam = lb_cams_query[qidx]
+        #print(qpid)
 
         order = indices[qidx]
+        #print(order)
+        #print(lb_ids[order], qpid)
         pid_diff = lb_ids[order] != qpid
+        cam_diff = lb_cams[order] != qcam
+        #print(pid_diff)
+        #print(pid_diff.shape)
         useful = lb_ids[order] != -1
-        #keep = np.logical_or(pid_diff, cam_diff)
-        keep = np.logical_and(pid_diff, useful)
-        print(keep)
+        keep = np.logical_or(pid_diff, cam_diff)
+        keep = np.logical_and(keep, useful)
+        #print(keep)
         match = matches[qidx][keep]
-        print(match)
+        #print(match)
 
         if not np.any(match): continue
 
@@ -154,9 +162,10 @@ def evaluate(load_path1, load_path2):
 
 
 if __name__ == '__main__':
-    #load_path = '/mnt/analyticsvideo/DensePoseData/market1501/'
-    #store_path = '../../res/embd_res'
-    #load_path = '/mnt/analyticsvideo/DensePoseData/market1501/query'
-    #store_path = '../../res/embd_query'
+    load_path = '/mnt/analyticsvideo/DensePoseData/market1501/bounding_box_test'
+    store_path = 'res/embd_res'
+    load_path2 = '/mnt/analyticsvideo/DensePoseData/market1501/query'
+    store_path2 = 'res/embd_query'
     #embed(load_path,store_path)
-    evaluate('../../res/embd_res', '../../res/embd_query')
+    #embed(load_path2, store_path2)
+    evaluate('res/embd_res', 'res/embd_query')

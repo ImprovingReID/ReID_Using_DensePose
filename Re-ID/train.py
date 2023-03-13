@@ -18,6 +18,11 @@ from dataWrapper import Wrapper
 from optimizer import AdamOptimWrapper
 from logger import logger
 
+from torchvision.models import resnet50, ResNet50_Weights
+
+
+
+
 def train():
     # setup
     torch.multiprocessing.set_sharing_strategy('file_system')
@@ -25,7 +30,12 @@ def train():
 
     # model and loss
     logger.info('setting up backbone model and loss')
+
+    rn50 = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
+
     mainNet = ResNet50_bb().cuda()
+    #mainNet.conv1.weight.data.copy_(rn50.conv1.weight.data)
+    #mainNet.layer1.copy_(rn50.layer1)
     mainNet = nn.DataParallel(mainNet)
     DSAGNet = ResNet18_bb().cuda()
     DSAGNet = nn.DataParallel(DSAGNet)
@@ -69,10 +79,10 @@ def train():
     t_start = time.time()
     while True:
         try:
-            imgs, imgs_dense, lbs = next(diter)
+            imgs, imgs_dense, lbs, _ = next(diter)
         except StopIteration:
             diter = iter(dl)
-            imgs, imgs_dense, lbs = next(diter)
+            imgs, imgs_dense, lbs, _ = next(diter)
         mainNet.train()
         DSAGNet.train()
         mainHead.train()
@@ -86,17 +96,27 @@ def train():
         mainEmbds = mainNet(imgs)
         DSAGEmbds = DSAGNet(imgs_dense)
 
+        #print(mainEmbds)
+
         mainGlobalEmbds, mainLocalEmbds = mainHead(mainEmbds)
         denseGlobalEmbds, denseLocalEmbds = denseHead(DSAGEmbds)
         globalEmbds = mainGlobalEmbds + denseGlobalEmbds
         localEmbds = mainLocalEmbds + denseLocalEmbds
+
+        # print(mainGlobalEmbds)
+        # print(mainLocalEmbds)
+        # print(denseGlobalEmbds)
+        # print(denseLocalEmbds)
+        # print(globalEmbds)
+        # print(localEmbds)
+        # print("")
     
         anchor, positives, negatives = selector(globalEmbds, lbs)
         trip_global_loss = triplet_loss(anchor, positives, negatives)
         anchor, positives, negatives = selector(localEmbds, lbs)
         trip_local_loss = triplet_loss(anchor, positives, negatives)
 
-        lbs = torch.tensor([0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10,11,11,11,11,12,12,12,12,13,13,13,13,14,14,14,14,15,15,15,15,16,16,16,16,17,17,17,17]).cuda()
+        #lbs = torch.tensor([0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10,11,11,11,11,12,12,12,12,13,13,13,13,14,14,14,14,15,15,15,15,16,16,16,16,17,17,17,17]).cuda()
 
         global_main_ID_loss = ID_loss(classifier(mainGlobalEmbds),lbs)
         local_main_ID_loss = ID_loss(classifier(mainLocalEmbds),lbs)
@@ -111,6 +131,13 @@ def train():
         for m in model:
             m.zero_grad()
 
+        # print(trip_global_loss)
+        # print(trip_local_loss)
+        # print(global_main_ID_loss)
+        # print(local_main_ID_loss)
+        # print(global_ID_loss)
+        # print(local_ID_loss)
+        # print('')
 
         loss = (c1*(trip_global_loss+trip_local_loss)+c2*(global_main_ID_loss+local_main_ID_loss)+c3*(global_ID_loss+local_ID_loss))
         #print(trip_global_loss, trip_local_loss,global_main_ID_loss, local_main_ID_loss, global_ID_loss, local_ID_loss)
@@ -130,16 +157,16 @@ def train():
             t_start = t_end
 
         count += 1
-        if count == 5000: 
+        if count == 50: 
             break
 
     # dump model
     logger.info('saving trained model')
-    torch.save(mainNet.module.state_dict(), './res/mainNet2.pkl')
-    torch.save(DSAGNet.module.state_dict(), './res/DSAGNet2.pkl')
-    torch.save(mainHead.module.state_dict(), './res/mainHead2.pkl')
-    torch.save(denseHead.module.state_dict(), './res/denseHead2.pkl')
-    torch.save(classifier.module.state_dict(), './res/classifier2.pkl')
+    torch.save(mainNet.module.state_dict(), 'res/mainNet2_50.pkl')
+    torch.save(DSAGNet.module.state_dict(), 'res/DSAGNet2_50.pkl')
+    torch.save(mainHead.module.state_dict(), 'res/mainHead2_50.pkl')
+    torch.save(denseHead.module.state_dict(), 'res/denseHead2_50.pkl')
+    torch.save(classifier.module.state_dict(), 'res/classifier2_50.pkl')
 
 
     logger.info('everything finished')

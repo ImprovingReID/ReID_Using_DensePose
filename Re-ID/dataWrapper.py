@@ -24,6 +24,7 @@ class Wrapper(Dataset):
         self.imgs_dense = sorted(os.listdir(data_path_dense))
         self.imgs_dense = [el for el in self.imgs_dense if os.path.splitext(el)[1] == '.jpg']
         self.lb_ids = [int(el.split('_')[0]) for el in self.imgs]
+        self.lb_cams = [int(el.split('_')[1][1]) for el in self.imgs]
         self.imgs = [os.path.join(data_path, el) for el in self.imgs]
         self.imgs_dense = [os.path.join(data_path_dense, el) for el in self.imgs_dense]
 
@@ -85,6 +86,6 @@ class Wrapper(Dataset):
         if self.data_path_dense != None:
             img_dense = Image.open(self.imgs_dense[idx])
             img_dense = self.trans_dense(img_dense)
-            return img, img_dense, self.lb_ids[idx]
+            return img, img_dense, self.lb_ids[idx], self.lb_cams[idx]
         else:
-            return img, self.lb_ids[idx]
+            return img, self.lb_ids[idx], self.lb_cams[idx]

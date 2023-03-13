@@ -83,7 +83,7 @@ class DenseHead(Head):
         return nn.Sequential(*layers)
 
 class Classifier(nn.Module):
-    def __init__(self, in_features=2048, num_class=18):
+    def __init__(self, in_features=2048, num_class=1501):
         super(Classifier, self).__init__()
         self.fc1 = nn.Linear(in_features, 512)
         self.fc2 = nn.Linear(512, num_class)

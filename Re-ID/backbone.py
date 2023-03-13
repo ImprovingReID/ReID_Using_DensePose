@@ -46,6 +46,7 @@ class ResNet50_bb(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(ResNet50Block, 64, 3, stride=1)
+        self.layer2 = self._make_layer(ResNet50Block, 128, 4, stride=2)
         self.layer3 = self._make_layer(ResNet50Block, 256, 6, stride=2)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(1024, 2048)
@@ -61,11 +62,22 @@ class ResNet50_bb(nn.Module):
 
     def forward(self, x):
         out = self.conv1(x)
+        print(out)
         out = self.bn1(out)
+        #print(out)
         out = self.relu(out)
+        #print(out)
         out = self.maxpool(out)
+        #print(out)
         out = self.layer1(out)
+        #print(out)
+        out = self.layer2(out) # To use or not to use?
+        #print(out)
         out = self.layer3(out)
+        #print(out)
+        print("")
+        print("")
+        print("")
         return out
 
 class ResNet18Block(nn.Module):
