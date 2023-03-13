@@ -34,8 +34,11 @@ def train():
     rn50 = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
 
     mainNet = ResNet50_bb().cuda()
-    #mainNet.conv1.weight.data.copy_(rn50.conv1.weight.data)
-    #mainNet.layer1.copy_(rn50.layer1)
+    for mainlayer,reslayer,numlayersinblock in [[mainNet.layer1,rn50.layer1, 3], [mainNet.layer2,rn50.layer2,4],[mainNet.layer3,rn50.layer3,6]]:
+        for conv in ["conv1","conv2","conv3"]:
+             for i in range(numlayersinblock):
+                 mainlayer[i]._modules[conv].weight.data.copy_(reslayer[i]._modules[conv].weight.data)
+
     mainNet = nn.DataParallel(mainNet)
     DSAGNet = ResNet18_bb().cuda()
     DSAGNet = nn.DataParallel(DSAGNet)
@@ -96,27 +99,15 @@ def train():
         mainEmbds = mainNet(imgs)
         DSAGEmbds = DSAGNet(imgs_dense)
 
-        #print(mainEmbds)
-
         mainGlobalEmbds, mainLocalEmbds = mainHead(mainEmbds)
         denseGlobalEmbds, denseLocalEmbds = denseHead(DSAGEmbds)
         globalEmbds = mainGlobalEmbds + denseGlobalEmbds
         localEmbds = mainLocalEmbds + denseLocalEmbds
-
-        # print(mainGlobalEmbds)
-        # print(mainLocalEmbds)
-        # print(denseGlobalEmbds)
-        # print(denseLocalEmbds)
-        # print(globalEmbds)
-        # print(localEmbds)
-        # print("")
     
         anchor, positives, negatives = selector(globalEmbds, lbs)
         trip_global_loss = triplet_loss(anchor, positives, negatives)
         anchor, positives, negatives = selector(localEmbds, lbs)
         trip_local_loss = triplet_loss(anchor, positives, negatives)
-
-        #lbs = torch.tensor([0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10,11,11,11,11,12,12,12,12,13,13,13,13,14,14,14,14,15,15,15,15,16,16,16,16,17,17,17,17]).cuda()
 
         global_main_ID_loss = ID_loss(classifier(mainGlobalEmbds),lbs)
         local_main_ID_loss = ID_loss(classifier(mainLocalEmbds),lbs)
@@ -131,17 +122,7 @@ def train():
         for m in model:
             m.zero_grad()
 
-        # print(trip_global_loss)
-        # print(trip_local_loss)
-        # print(global_main_ID_loss)
-        # print(local_main_ID_loss)
-        # print(global_ID_loss)
-        # print(local_ID_loss)
-        # print('')
-
         loss = (c1*(trip_global_loss+trip_local_loss)+c2*(global_main_ID_loss+local_main_ID_loss)+c3*(global_ID_loss+local_ID_loss))
-        #print(trip_global_loss, trip_local_loss,global_main_ID_loss, local_main_ID_loss, global_ID_loss, local_ID_loss)
-        #print(loss)
         loss.backward()
 
         for m in model_name:
@@ -157,16 +138,17 @@ def train():
             t_start = t_end
 
         count += 1
-        if count == 50: 
+        if count == 5: 
             break
 
     # dump model
     logger.info('saving trained model')
-    torch.save(mainNet.module.state_dict(), 'res/mainNet2_50.pkl')
-    torch.save(DSAGNet.module.state_dict(), 'res/DSAGNet2_50.pkl')
-    torch.save(mainHead.module.state_dict(), 'res/mainHead2_50.pkl')
-    torch.save(denseHead.module.state_dict(), 'res/denseHead2_50.pkl')
-    torch.save(classifier.module.state_dict(), 'res/classifier2_50.pkl')
+    name = 'IDL'
+    torch.save(mainNet.module.state_dict(), 'res/mainNet_' + name + '.pkl')
+    torch.save(DSAGNet.module.state_dict(), 'res/DSAGNet_' + name + '.pkl')
+    torch.save(mainHead.module.state_dict(), 'res/mainHead_' + name + '.pkl')
+    torch.save(denseHead.module.state_dict(), 'res/denseHead_' + name + '.pkl')
+    torch.save(classifier.module.state_dict(), 'res/classifier_' + name + '.pkl')
 
 
     logger.info('everything finished')

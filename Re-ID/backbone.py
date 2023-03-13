@@ -61,8 +61,9 @@ class ResNet50_bb(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        #print(x)
         out = self.conv1(x)
-        print(out)
+        #print(out)
         out = self.bn1(out)
         #print(out)
         out = self.relu(out)
@@ -75,9 +76,6 @@ class ResNet50_bb(nn.Module):
         #print(out)
         out = self.layer3(out)
         #print(out)
-        print("")
-        print("")
-        print("")
         return out
 
 class ResNet18Block(nn.Module):
