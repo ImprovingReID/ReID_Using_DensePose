@@ -42,6 +42,12 @@ class AdamOptimWrapper(object):
     def zero_grad(self):
         self.optim.zero_grad()
 
+    def set_lr(self,lr):
+        self.base_lr = lr
+
     @property
     def lr(self):
         return self.optim.param_groups[0]['lr']
+    
+class SGDOptimWrapper(object):
+    pass

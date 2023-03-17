@@ -27,7 +27,7 @@ class TripletLoss(nn.Module):
 
         return loss
 
-class ArcFace(torch.nn.Module): #https://github.com/deepinsight/insightface/blob/master/recognition/arcface_torch/losses.py
+class ArcFace(nn.Module): #https://github.com/deepinsight/insightface/blob/master/recognition/arcface_torch/losses.py
     """ ArcFace (https://arxiv.org/pdf/1801.07698v1.pdf):
     """
     def __init__(self, s=64.0, margin=0.5):
@@ -51,7 +51,7 @@ class ArcFace(torch.nn.Module): #https://github.com/deepinsight/insightface/blob
             final_target_logit = target_logit + self.margin
             logits[index, labels[index].view(-1)] = final_target_logit
             logits.cos_()
-        logits = logits * self.s        
+        logits = logits * self.scale        
         return logits
 
 class CrossEntropy(nn.Module):

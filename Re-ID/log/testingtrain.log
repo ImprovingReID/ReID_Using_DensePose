@@ -1,0 +1,3 @@
+Fri, 17 Mar 2023 09:05:33 train.py[line:55] INFO setting up backbone model and loss
+Fri, 17 Mar 2023 09:05:34 train.py[line:104] INFO creating optimizer
+Fri, 17 Mar 2023 09:05:36 train.py[line:121] INFO start training ...

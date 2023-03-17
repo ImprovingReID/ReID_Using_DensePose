@@ -25,22 +25,29 @@ class MainHead(Head):
 
         # 1024x8x8 or 128x32x16?
         L = [None]*8
-        h, w = int(x.shape[2]/4), int(x.shape[3]/2)
-        k=0
-        for j in range(4):
-            for i in range(2):
-                L[k] = x[:,:,j*h:(j+1)*h,i*w:(i+1)*w]
-                L[k] = self.layerL(L[k])
-                L[k] = self.avgpool(L[k])
-                L[k] = L[k].view(L[k].size(0), -1)
-                k+=1
+        # h, w = int(x.shape[2]/4), int(x.shape[3]/2)
+        # k=0
+        # for j in range(4):
+        #     for i in range(2):
+        #         L[k] = x[:,:,j*h:(j+1)*h,i*w:(i+1)*w]
+        #         L[k] = self.layerL(L[k])
+        #         L[k] = self.avgpool(L[k])
+        #         L[k] = L[k].view(L[k].size(0), -1)
+        #         k+=1
+
+        for i in range(8):
+            L[i] = x[:,i*128:(i+1)*128,:,:]
+            L[i] = self.layerL(L[i])
+            L[i] = self.avgpool(L[i])
+            L[i] = L[i].view(L[i].size(0), -1)
+
         L = torch.cat((L[0], L[1], L[2], L[3], L[4], L[5], L[6], L[7]),1)
 
         return G, L
 
     def _make_layer(self, block, out_channels, num_blocks, stride, local = False):
         if local:
-            self.in_channels=1024
+            self.in_channels=128
         layers = []
         layers.append(block(self.in_channels, out_channels, stride))
         self.in_channels = out_channels * 4

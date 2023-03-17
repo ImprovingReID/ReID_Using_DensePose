@@ -19,23 +19,25 @@ from utils import pdist_np as pdist
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
-def embed(load_path, store_path):
+def embed(load_path, store_path, net_path = None, head_path = None):
 
     ## logging
     FORMAT = '%(levelname)s %(filename)s:%(lineno)d: %(message)s'
     logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)
     logger = logging.getLogger(__name__)
 
-    ## restore model
+    ## restore model   
     logger.info('restoring model')
     mainNet = ResNet50_bb().cuda()
-    mainNet.load_state_dict(torch.load('res/mainNet2.pkl'))
+    mainNet.load_state_dict(torch.load(net_path))
     mainNet = nn.DataParallel(mainNet)
     mainHead = MainHead().cuda()
-    mainHead.load_state_dict(torch.load('res/mainHead2.pkl'))
+    mainHead.load_state_dict(torch.load(head_path))
     mainHead = nn.DataParallel(mainHead)
     mainNet.eval()
     mainHead.eval()
+
+
 
     ## load gallery dataset
     batchsize = 32
@@ -59,8 +61,10 @@ def embed(load_path, store_path):
         embdsGlobal = []
         for im in img:
             im = im.cuda()
-            embd = mainNet(im).cpu()#.numpy()
-            G, L = mainHead(embd)#.detach().cpu().numpy()
+            embd = mainNet(im).cpu()
+            G, L = mainHead(embd)
+            G_loss = G
+            L_loss = L
             G = G.detach().cpu().numpy()
             L = L.detach().cpu().numpy()
             embdsGlobal.append(G)
@@ -77,15 +81,18 @@ def embed(load_path, store_path):
     label_ids = np.hstack(label_ids)
     label_cams = np.hstack(label_cams)
 
+    print(label_ids)
     ## dump results
     logger.info('dump embeddings')
     embd_res = {'embeddingsGlobal': embeddingsGlobal, 'embeddingLocal': embeddingsLocal, 'label_ids': label_ids, 'label_cams': label_cams}
     with open(store_path, 'wb') as fw:
         pickle.dump(embd_res, fw)
     logger.info('embedding finished')
+    logger.info('embedding finished')
+    return torch.tensor(embeddingsGlobal), torch.tensor(embeddingsLocal), torch.tensor(label_ids)
 
 
-def evaluate(load_path1, load_path2):
+def evaluate(load_path1, load_path2, embd_res = None, query_res = None):
     cmc_rank = 1
 
     ## logging
@@ -94,54 +101,49 @@ def evaluate(load_path1, load_path2):
     logger = logging.getLogger(__name__)
 
     ## load embeddings
-    logger.info('loading gallery embeddings')
-    with open(load_path1, 'rb') as fr:
-        gallery_dict = pickle.load(fr)
+    if embd_res == None:
+        logger.info('loading gallery embeddings')
+        with open(load_path1, 'rb') as fr:
+            gallery_dict = pickle.load(fr)
+            embGlobal, embLocal, lb_ids, lb_cams = gallery_dict['embeddingsGlobal'], gallery_dict['embeddingLocal'], gallery_dict['label_ids'], gallery_dict['label_cams']
+        logger.info('loading query embeddings')
+        with open(load_path2 , 'rb') as fr:
+            query_dict = pickle.load(fr)
+            embGlobal_query, embLocal_query, lb_ids_query, lb_cams_query = query_dict['embeddingsGlobal'], query_dict['embeddingLocal'], query_dict['label_ids'], query_dict['label_cams']
+    else:
+        logger.info('loading gallery embeddings')
+        gallery_dict = embd_res
         embGlobal, embLocal, lb_ids, lb_cams = gallery_dict['embeddingsGlobal'], gallery_dict['embeddingLocal'], gallery_dict['label_ids'], gallery_dict['label_cams']
-    logger.info('loading query embeddings')
-    with open(load_path2 , 'rb') as fr:
-        query_dict = pickle.load(fr)
+        logger.info('loading query embeddings')
+        query_dict = query_res
         embGlobal_query, embLocal_query, lb_ids_query, lb_cams_query = query_dict['embeddingsGlobal'], query_dict['embeddingLocal'], query_dict['label_ids'], query_dict['label_cams']
+    
+
 
     ## compute and clean distance matrix
     embGallery = np.concatenate((embGlobal,embLocal),1)
     embQuery = np.concatenate((embGlobal_query, embLocal_query),1)
-    print(embGallery.shape)
-    print(embQuery.shape)
     dist_mtx = pdist(embQuery, embGallery)
-    print(dist_mtx.shape)
     n_q, n_g = dist_mtx.shape
     indices = np.argsort(dist_mtx, axis = 1)
-    print(indices)
-    print(lb_ids.shape)
-    print(lb_ids_query.shape)
     matches = lb_ids[indices] == lb_ids_query[:, np.newaxis]
     matches = matches.astype(np.int32)
-    print(matches.shape)
     all_aps = []
     all_cmcs = []
     logger.info('starting evaluating ...')
     for qidx in range(n_q): #tqdm(range(n_q)):
         qpid = lb_ids_query[qidx]
         qcam = lb_cams_query[qidx]
-        #print(qpid)
 
         order = indices[qidx]
-        #print(order)
-        #print(lb_ids[order], qpid)
         pid_diff = lb_ids[order] != qpid
         cam_diff = lb_cams[order] != qcam
-        #print(pid_diff)
-        #print(pid_diff.shape)
         useful = lb_ids[order] != -1
         keep = np.logical_or(pid_diff, cam_diff)
         keep = np.logical_and(keep, useful)
-        #print(keep)
         match = matches[qidx][keep]
-        #print(match)
 
         if not np.any(match): continue
-
         cmc = match.cumsum()
         cmc[cmc > 1] = 1
         all_cmcs.append(cmc[:cmc_rank])
@@ -166,6 +168,6 @@ if __name__ == '__main__':
     store_path = 'res/embd_res'
     load_path2 = '/mnt/analyticsvideo/DensePoseData/market1501/query'
     store_path2 = 'res/embd_query'
-    #embed(load_path,store_path)
-    #embed(load_path2, store_path2)
+    embed(load_path,store_path, net_path='res/testing_mainNet.pkl', head_path='res/testing_mainHead.pkl')
+    embed(load_path2, store_path2)
     evaluate('res/embd_res', 'res/embd_query')
