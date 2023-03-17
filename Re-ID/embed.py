@@ -37,8 +37,6 @@ def embed(load_path, store_path, net_path = None, head_path = None):
     mainNet.eval()
     mainHead.eval()
 
-
-
     ## load gallery dataset
     batchsize = 32
     ds = Wrapper(load_path, is_train = False)
@@ -81,7 +79,6 @@ def embed(load_path, store_path, net_path = None, head_path = None):
     label_ids = np.hstack(label_ids)
     label_cams = np.hstack(label_cams)
 
-    print(label_ids)
     ## dump results
     logger.info('dump embeddings')
     embd_res = {'embeddingsGlobal': embeddingsGlobal, 'embeddingLocal': embeddingsLocal, 'label_ids': label_ids, 'label_cams': label_cams}
@@ -92,7 +89,7 @@ def embed(load_path, store_path, net_path = None, head_path = None):
     return torch.tensor(embeddingsGlobal), torch.tensor(embeddingsLocal), torch.tensor(label_ids)
 
 
-def evaluate(load_path1, load_path2, embd_res = None, query_res = None):
+def evaluate(load_path1, load_path2):
     cmc_rank = 1
 
     ## logging
@@ -101,24 +98,15 @@ def evaluate(load_path1, load_path2, embd_res = None, query_res = None):
     logger = logging.getLogger(__name__)
 
     ## load embeddings
-    if embd_res == None:
-        logger.info('loading gallery embeddings')
-        with open(load_path1, 'rb') as fr:
-            gallery_dict = pickle.load(fr)
-            embGlobal, embLocal, lb_ids, lb_cams = gallery_dict['embeddingsGlobal'], gallery_dict['embeddingLocal'], gallery_dict['label_ids'], gallery_dict['label_cams']
-        logger.info('loading query embeddings')
-        with open(load_path2 , 'rb') as fr:
-            query_dict = pickle.load(fr)
-            embGlobal_query, embLocal_query, lb_ids_query, lb_cams_query = query_dict['embeddingsGlobal'], query_dict['embeddingLocal'], query_dict['label_ids'], query_dict['label_cams']
-    else:
-        logger.info('loading gallery embeddings')
-        gallery_dict = embd_res
-        embGlobal, embLocal, lb_ids, lb_cams = gallery_dict['embeddingsGlobal'], gallery_dict['embeddingLocal'], gallery_dict['label_ids'], gallery_dict['label_cams']
-        logger.info('loading query embeddings')
-        query_dict = query_res
-        embGlobal_query, embLocal_query, lb_ids_query, lb_cams_query = query_dict['embeddingsGlobal'], query_dict['embeddingLocal'], query_dict['label_ids'], query_dict['label_cams']
-    
 
+    logger.info('loading gallery embeddings')
+    with open(load_path1, 'rb') as fr:
+        gallery_dict = pickle.load(fr)
+        embGlobal, embLocal, lb_ids, lb_cams = gallery_dict['embeddingsGlobal'], gallery_dict['embeddingLocal'], gallery_dict['label_ids'], gallery_dict['label_cams']
+    logger.info('loading query embeddings')
+    with open(load_path2 , 'rb') as fr:
+        query_dict = pickle.load(fr)
+        embGlobal_query, embLocal_query, lb_ids_query, lb_cams_query = query_dict['embeddingsGlobal'], query_dict['embeddingLocal'], query_dict['label_ids'], query_dict['label_cams']
 
     ## compute and clean distance matrix
     embGallery = np.concatenate((embGlobal,embLocal),1)

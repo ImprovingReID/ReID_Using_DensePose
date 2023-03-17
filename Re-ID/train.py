@@ -25,73 +25,53 @@ from pytorch_metric_learning import losses
 from torchvision.models import resnet50, ResNet50_Weights
 
 
-def train(name = None, num_it = 30000):
-    # setup
+def train(name, load_path, num_it = 30000):
+    # Setup
     torch.multiprocessing.set_sharing_strategy('file_system')
     if not os.path.exists('./res'): os.makedirs('./res')
 
-    # model and loss
-    path_log = Path("log/" + name + "train.log")
-
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
-
-    try:
-        if path_log.exists():
-            raise FileExistsError
-    except FileExistsError:
-        print("Already exist log file: {}".format(path_log))
-        raise
-    else:
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s",
-            datefmt="%a, %d %b %Y %H:%M:%S",
-            filename=path_log.__str__(),
-            filemode="w",
-        )
-        print("Create log file: {}".format(path_log))
-
+    # Model
     logger.info('setting up backbone model and loss')
 
-    rn50 = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
+    # rn50 = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
 
     mainNet = ResNet50_bb().cuda()
-    #mainNet.load_state_dict(torch.load('res/arcface30k_mainNet.pkl'))
-    for mainlayer,reslayer,numlayersinblock in [[mainNet.layer1,rn50.layer1, 3], [mainNet.layer2,rn50.layer2,4],[mainNet.layer3,rn50.layer3,6]]:
-         for conv in ["conv1","conv2","conv3"]:
-              for i in range(numlayersinblock):
-                  mainlayer[i]._modules[conv].weight.data.copy_(reslayer[i]._modules[conv].weight.data)
-
+    mainNet.load_state_dict(torch.load('res/arcface30k_mainNet.pkl'))
+    # for mainlayer,reslayer,numlayersinblock in [[mainNet.layer1,rn50.layer1, 3], [mainNet.layer2,rn50.layer2,4],[mainNet.layer3,rn50.layer3,6]]:
+    #      for conv in ["conv1","conv2","conv3"]:
+    #           for i in range(numlayersinblock):
+    #               mainlayer[i]._modules[conv].weight.data.copy_(reslayer[i]._modules[conv].weight.data)
     mainNet = nn.DataParallel(mainNet)
     DSAGNet = ResNet18_bb().cuda()
-    #DSAGNet.load_state_dict(torch.load('res/arcface30k_DSAGNet.pkl'))
+    DSAGNet.load_state_dict(torch.load('res/arcface30k_DSAGNet.pkl'))
     DSAGNet = nn.DataParallel(DSAGNet)
-
     mainHead = MainHead().cuda()
     #mainHead.load_state_dict(torch.load('res/arcface30k_mainHead.pkl'))
     mainHead = nn.DataParallel(mainHead)
     DSAGHead = DenseHead().cuda()
-    #DSAGHead.load_state_dict(torch.load('res/arcface30k_DSAGHead.pkl'))
+    DSAGHead.load_state_dict(torch.load('res/arcface30k_DSAGHead.pkl'))
     DSAGHead = nn.DataParallel(DSAGHead)
 
     classifier = Classifier().cuda()
     classifier = nn.DataParallel(classifier)
 
-    triplet_loss = TripletLoss(margin = None).cuda() # no margin means soft-margin
-    ID_loss = nn.CrossEntropyLoss().cuda()
-
+    # Loss
     num_classes=1501
     embedding_size=2048
+    c1, c2, c3 = 1.5, 0.5, 1
+    triplet_loss = TripletLoss(margin = None).cuda() # no margin means soft-margin
+    ID_loss = nn.CrossEntropyLoss().cuda()
     arcface_loss = losses.ArcFaceLoss(num_classes, embedding_size, margin=28.6, scale=64).cuda() # 28.6 and 64
 
-    model_name = ["mainNet", "DSAGNet", "mainHead", "denseHead", "classifier"]
+    # Optimizer
+    logger.info('creating optimizer')
+    model_name = ["mainNet", "DSAGNet", "mainHead", "denseHead"]#, "classifier"]
     optimizer = {
     "mainNet": AdamOptimWrapper(mainNet.parameters(), lr = 3e-3, wd = 0, t0 = 15000, t1 = 25000),
     "DSAGNet": AdamOptimWrapper(DSAGNet.parameters(), lr = 3e-3, wd = 0, t0 = 15000, t1 = 25000),
     "mainHead": AdamOptimWrapper(mainHead.parameters(), lr = 3e-3, wd = 0, t0 = 15000, t1 = 25000),
     "denseHead": AdamOptimWrapper(DSAGHead.parameters(), lr = 3e-3, wd = 0, t0 = 15000, t1 = 25000),
-    "classifier": AdamOptimWrapper(classifier.parameters(), lr = 3e-3, wd = 0, t0 = 15000, t1 = 25000)
+    #"classifier": AdamOptimWrapper(classifier.parameters(), lr = 3e-3, wd = 0, t0 = 15000, t1 = 25000)
     # "mainNet": torch.optim.SGD(mainNet.parameters(), lr = 0.025, momentum = 0.9, weight_decay=5e-4),
     # "DSAGNet": torch.optim.SGD(DSAGNet.parameters(), lr = 0.025, momentum = 0.9, weight_decay=5e-4),
     # "mainHead": torch.optim.SGD(mainHead.parameters(), lr = 0.025, momentum = 0.9, weight_decay=5e-4),
@@ -100,35 +80,31 @@ def train(name = None, num_it = 30000):
     }
 
 
-    # optimizer
-    logger.info('creating optimizer')
-    #optim = AdamOptimWrapper(mainNet.parameters(), lr = 3e-3, wd = 0, t0 = 15000, t1 = 25000)
-
-    # /mnt/analyticsvideo/DensePoseData/market1501/SegmentedMarket1501train
+    # Train dataloader
     selector = BatchHardTripletSelector()
-    ds = Wrapper('/mnt/analyticsvideo/DensePoseData/market1501/bounding_box_train',data_path_dense='/mnt/analyticsvideo/DensePoseData/market1501/uv_maps_train', is_train = True)
-    sampler = BatchSampler(ds, 18, 4)
+    ds = Wrapper(load_path + 'bounding_box_train', data_path_dense=load_path + 'uv_maps_train', is_train = True)
+    n_classes = 18
+    n_num = 4
+    batch_size = n_classes*n_num
+    sampler = BatchSampler(ds, n_classes, n_num)
     dl = DataLoader(ds, batch_sampler = sampler, num_workers = 4)
     diter = iter(dl)
 
-    # For test error
-    ds_test = Wrapper('/mnt/analyticsvideo/DensePoseData/market1501/bounding_box_test',data_path_dense='/mnt/analyticsvideo/DensePoseData/market1501/uv_maps_test', is_train = True)
-    sampler_test = BatchSampler(ds_test, 18, 4)
+    # Test dataloader (for loss plot)
+    ds_test = Wrapper(load_path + 'bounding_box_test',data_path_dense=load_path + 'uv_maps_test', is_train = False)
+    sampler_test = BatchSampler(ds_test, 24, 3)
     dl_test = DataLoader(ds_test, batch_sampler = sampler_test, num_workers = 4)
     diter_test = iter(dl_test)
 
-    # train
+    # Train
     logger.info('start training ...')
     loss_avg = []
     count = 0
     epochs = 0
+    itPerEpoch = len(ds.imgs) // batch_size
     losses_train = []
     losses_test = []
     epochs_counter = []
-    load_path = '/mnt/analyticsvideo/DensePoseData/market1501/bounding_box_test'
-    store_path = 'res/embd_res'
-    load_path2 = '/mnt/analyticsvideo/DensePoseData/market1501/query'
-    store_path2 = 'res/embd_query'
     t_start = time.time()
     while True:
         try:
@@ -140,7 +116,7 @@ def train(name = None, num_it = 30000):
         DSAGNet.train()
         mainHead.train()
         DSAGHead.train()
-        classifier.train()
+        #classifier.train()
 
         imgs = imgs.cuda()
         lbs = lbs.cuda()
@@ -170,12 +146,9 @@ def train(name = None, num_it = 30000):
         local_main_arcface_loss = arcface_loss(mainLocalEmbds,lbs)
         global_arcface_loss = arcface_loss(globalEmbds, lbs)
         local_arcface_loss = arcface_loss(localEmbds,lbs)
-
-        # weights
-        c1, c2, c3 = 1.5, 0.5, 1
         
         # Update model
-        model = [mainNet, DSAGNet, mainHead, DSAGHead, classifier]
+        model = [mainNet, DSAGNet, mainHead, DSAGHead]#, classifier]
         for m in model:
             m.zero_grad()
 
@@ -194,8 +167,6 @@ def train(name = None, num_it = 30000):
         for m in model_name:
             optimizer[m].step()
 
-        #optim.step()))+
-
         loss_avg.append(loss.detach().cpu().numpy())
         if count % 20 == 0 and count != 0:
             loss_avg = sum(loss_avg) / len(loss_avg)
@@ -205,26 +176,11 @@ def train(name = None, num_it = 30000):
             loss_avg = []
             t_start = t_end
 
-            if count == 20:
-                for m in model_name:
-                    optimizer[m].set_lr(1e-2)
-
-            if count == 500:
-                for m in model_name:
-                    optimizer[m].set_lr(1e-3)
-
         count += 1
+        print(count)
         if count % 5 == 0:
             epochs += 1
             if True: #epochs % 10 == 0:
-                # embd_global, embd_local, lbs = embed(load_path,store_path, Net = mainNet, Head = mainHead)
-                # embd_query, lbs = embed(load_path2, store_path2, Net = mainNet, Head = mainHead)
-                # print(type(embd_global))
-                # print(type(embd_local))
-                # print(type(lbs))
-                # print(embd_global.shape)
-                # print(embd_local.shape)
-                # print(lbs.shape)
                 try:
                     imgs, imgs_dense, lbs, _ = next(diter_test)
                 except StopIteration:
@@ -237,19 +193,28 @@ def train(name = None, num_it = 30000):
                 mainEmbds = mainNet(imgs)
                 DSAGEmbds = DSAGNet(imgs_dense)
 
+                print(lbs)
+                print(mainGlobalEmbds.shape)
+                print(mainGlobalEmbds)
+
                 mainGlobalEmbds, mainLocalEmbds = mainHead(mainEmbds)
                 denseGlobalEmbds, denseLocalEmbds = DSAGHead(DSAGEmbds)
-                embd_global = mainGlobalEmbds + denseGlobalEmbds
-                embd_local = mainLocalEmbds + denseLocalEmbds
+                globalEmbds = mainGlobalEmbds + denseGlobalEmbds
+                localEmbds = mainLocalEmbds + denseLocalEmbds
 
-                loss_global_main = arcface_loss(mainGlobalEmbds, lbs)
-                loss_local_main = arcface_loss(mainLocalEmbds, lbs)
-                loss_global = arcface_loss(embd_global,lbs)
-                loss_local = arcface_loss(embd_local,lbs)
+                # Update model
+                for m in model:
+                    m.zero_grad()
 
-                loss_test = c2*(loss_global_main+loss_local_main) + c3*(loss_global+loss_local)
-                losses_test.append(loss_test/72)
-                losses_train.append(loss/72)
+                global_main_arcface_loss = arcface_loss(mainGlobalEmbds,lbs)
+                local_main_arcface_loss = arcface_loss(mainLocalEmbds,lbs)
+                global_arcface_loss = arcface_loss(globalEmbds, lbs)
+                local_arcface_loss = arcface_loss(localEmbds,lbs)
+
+                loss_test = (c2*(global_main_arcface_loss+local_main_arcface_loss) + c3*(global_arcface_loss+local_arcface_loss)).detach().cpu().numpy()
+                loss = loss.detach().cpu().numpy()
+                losses_test.append(loss_test/batch_size)
+                losses_train.append(loss/batch_size)
                 epochs_counter.append(epochs)
 
         if count == num_it: 
@@ -266,7 +231,7 @@ def train(name = None, num_it = 30000):
 
     logger.info('everything finished')
 
-    return losses_test, losses_train, epochs
+    return losses_test, losses_train, epochs_counter
 
 
 if __name__ == '__main__':

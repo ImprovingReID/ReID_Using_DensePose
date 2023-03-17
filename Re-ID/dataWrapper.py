@@ -27,6 +27,8 @@ class Wrapper(Dataset):
         self.lb_cams = [int(el.split('_')[1][1]) for el in self.imgs]
         self.imgs = [os.path.join(data_path, el) for el in self.imgs]
         self.imgs_dense = [os.path.join(data_path_dense, el) for el in self.imgs_dense]
+        print(len(self.imgs))
+        print(len(self.imgs_dense))
 
         if is_train:
             self.trans = transforms.Compose([
@@ -84,6 +86,8 @@ class Wrapper(Dataset):
         img = Image.open(self.imgs[idx])
         img = self.trans(img)
         if self.data_path_dense != None:
+            #print(self.imgs[idx])
+            #print(self.imgs_dense[idx])
             img_dense = Image.open(self.imgs_dense[idx])
             img_dense = self.trans_dense(img_dense)
             return img, img_dense, self.lb_ids[idx], self.lb_cams[idx]
