@@ -91,8 +91,8 @@ def train(name, load_path, num_it = 30000):
     diter = iter(dl)
 
     # Test dataloader (for loss plot)
-    ds_test = Wrapper(load_path + 'bounding_box_test',data_path_dense=load_path + 'uv_maps_test', is_train = False)
-    sampler_test = BatchSampler(ds_test, 24, 3)
+    ds_test = Wrapper(load_path + 'bounding_box_test',data_path_dense=load_path + 'uv_maps_test', is_train = True, gay=False)
+    sampler_test = BatchSampler(ds_test, 18, 4)
     dl_test = DataLoader(ds_test, batch_sampler = sampler_test, num_workers = 4)
     diter_test = iter(dl_test)
 
@@ -177,7 +177,6 @@ def train(name, load_path, num_it = 30000):
             t_start = t_end
 
         count += 1
-        print(count)
         if count % 5 == 0:
             epochs += 1
             if True: #epochs % 10 == 0:
