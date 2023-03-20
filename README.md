@@ -22,7 +22,7 @@ source env/bin/avtivate
 ```
 Install requirements
 ```console
-pip install torch==1.9.0+cu102 torchvision==0.10.0+cu102 torchaudio==0.9.0 -f https://download.pytorch.org/whl/torch_stable.html matplotlib tqdm tk opencv-python logger
+pip install torch torchvision torchaudio -f https://download.pytorch.org/whl/torch_stable.html matplotlib tqdm tk opencv-python logger pytorch_metric_learning
 ```
 Add path to densepose and detectron files
 ```console
@@ -30,6 +30,7 @@ pip install -e ../detectron2/projects/DensePose
 pip install -e ../detectron2  
 ```
 
+kanske torch==1.9.0+cu102 torchvision==0.10.0+cu102 torchaudio==0.9.0
 
 ## Setup with docker
 This repo is easy to run with running the script docker_run.sh in "scripts" which builds and runs a docker image.
