@@ -1,6 +1,0 @@
-Fri, 17 Mar 2023 15:33:34 train.py[line:34] INFO setting up backbone model and loss
-Fri, 17 Mar 2023 15:33:36 train.py[line:67] INFO creating optimizer
-Fri, 17 Mar 2023 15:33:37 train.py[line:100] INFO start training ...
-Fri, 17 Mar 2023 15:33:53 train.py[line:175] INFO iter: 20, loss: 116.858457, time: 15.455363
-Fri, 17 Mar 2023 15:34:07 train.py[line:175] INFO iter: 40, loss: 116.510706, time: 13.850052
-Fri, 17 Mar 2023 15:34:22 train.py[line:175] INFO iter: 60, loss: 114.684976, time: 15.031607
